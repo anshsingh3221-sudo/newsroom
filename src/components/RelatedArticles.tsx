@@ -1,12 +1,13 @@
 /**
- * "More like this" list for the bottom of an article page. Server component.
- * Save as: src/components/RelatedArticles.tsx
- * Use:     <RelatedArticles slug={article.slug} />
+ * Related stories under an article. Server component.
+ * Save as: src/components/RelatedArticles.tsx  (replace the whole file)
+ * Use:     <RelatedArticles slug={a.slug} />
  */
-import { ARTICLE_PATH, getRelated, type ArticleRow } from "@/lib/Recommendations";
+import Link from "next/link";
+import { ARTICLE_PATH, categoryLabel, getRelated } from "@/lib/Recommendations";
 
 export async function RelatedArticles({ slug, limit = 4 }: { slug: string; limit?: number }) {
-  let items: ArticleRow[] = [];
+  let items: Awaited<ReturnType<typeof getRelated>> = [];
   try {
     items = await getRelated(slug, limit);
   } catch {
@@ -20,9 +21,14 @@ export async function RelatedArticles({ slug, limit = 4 }: { slug: string; limit
       <ul className="mt-3 border-t border-rule">
         {items.map((a) => (
           <li key={a.id} className="border-b border-rule py-3">
-            <a href={`${ARTICLE_PATH}${a.slug}`} className="font-medium hover:underline">
+            {a.category && (
+              <span className="ui text-xs font-semibold uppercase tracking-wide text-navy">
+                {categoryLabel(a.category)}
+              </span>
+            )}
+            <Link href={`${ARTICLE_PATH}${a.slug}`} className="mt-0.5 block font-medium hover:underline">
               {a.title}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>
