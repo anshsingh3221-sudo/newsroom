@@ -4,9 +4,16 @@ import { publicDb, type Row } from "@/lib/db";
 import { fmtDate } from "@/lib/verdicts";
 import { CiteIds, Cited } from "@/components/ui";
 import { ArticleImages } from "@/components/ArticleImages";
+import { TrackView } from "@/components/TrackView";
+import { RelatedArticles } from "@/components/RelatedArticles";
 
 export const dynamic = "force-dynamic";
 type Src = { id: string; url: string; title: string; publisher: string; publishedAt?: string };
+
+// Defined outside the page so it isn't re-created on every render
+const H = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="mt-10 border-b border-rule pb-1 text-2xl">{children}</h2>
+);
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const { data } = await publicDb().from("articles").select("title,summary").eq("slug", params.slug).eq("status", "approved").maybeSingle();
@@ -19,16 +26,20 @@ export default async function Article({ params }: { params: { slug: string } }) 
   if (!a) notFound();
   const b = a.body as Row;
   const sources: Src[] = b.sources ?? [];
-  const [corr, related, checks] = await Promise.all([
+
+  const [corr, checks] = await Promise.all([
     db.from("corrections").select("note,created_at").eq("article_id", a.id).order("created_at"),
-    db.from("articles").select("slug,title").eq("status", "approved").neq("id", a.id).eq("topic_slug", a.topic_slug ?? "").limit(4),
-    db.from("fact_checks").select("slug,claim_text").eq("status", "approved").eq("topic_slug", a.topic_slug ?? "").limit(4),
+    a.topic_slug
+      ? db.from("fact_checks").select("slug,claim_text").eq("status", "approved").eq("topic_slug", a.topic_slug).limit(4)
+      : Promise.resolve({ data: [] as Row[] }),
   ]);
+
   const P = ({ t }: { t: string }) => <p className="mt-3"><Cited text={t} sources={sources} /></p>;
-  const H = ({ children }: { children: React.ReactNode }) => <h2 className="mt-10 border-b border-rule pb-1 text-2xl">{children}</h2>;
 
   return (
     <article className="prose-col mx-auto">
+      <TrackView articleId={a.id} />
+
       <h1 className="text-4xl sm:text-5xl">{a.title}</h1>
       <p className="mt-4 text-xl text-muted">{a.summary}</p>
       <ArticleImages images={b.images} />
@@ -66,11 +77,13 @@ export default async function Article({ params }: { params: { slug: string } }) 
       {corr.data?.length ? <ul className="ui mt-3 space-y-2 text-sm">{corr.data.map((c: Row, i: number) => <li key={i}><strong>{fmtDate(c.created_at)}:</strong> {c.note}</li>)}</ul>
         : <p className="ui mt-3 text-sm text-muted">No corrections have been made to this article. To report an error, see our <Link href="/corrections" className="underline">corrections policy</Link>.</p>}
 
-      {(related.data?.length || checks.data?.length) ? (<><H>Related</H>
+      <RelatedArticles slug={a.slug} />
+
+      {checks.data?.length ? (
         <ul className="ui mt-3 space-y-1 text-sm">
-          {related.data?.map((r: Row) => <li key={r.slug}><Link className="underline" href={`/news/${r.slug}`}>{r.title}</Link></li>)}
-          {checks.data?.map((r: Row) => <li key={r.slug}>Fact-check: <Link className="underline" href={`/fact-checks/${r.slug}`}>{r.claim_text}</Link></li>)}
-        </ul></>) : null}
+          {checks.data.map((r: Row) => <li key={r.slug}>Fact-check: <Link className="underline" href={`/fact-checks/${r.slug}`}>{r.claim_text}</Link></li>)}
+        </ul>
+      ) : null}
     </article>
   );
 }

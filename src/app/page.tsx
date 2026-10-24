@@ -4,6 +4,7 @@ import { fmtDate } from "@/lib/verdicts";
 import { Empty, SectionTitle, VerdictBadge } from "@/components/ui";
 import { Subscribe } from "@/components/Subscribe";
 import { RELATION_LABEL, type Relation } from "@/lib/ai/types";
+import { ForYou } from "@/components/ForYou";
 
 export const dynamic = "force-dynamic";
 
@@ -64,8 +65,10 @@ export default async function Home() {
               <article key={a.slug}><h3 className="text-xl"><Link href={`/news/${a.slug}`} className="hover:underline">{a.title}</Link></h3><p className="mt-1 text-muted">{a.summary}</p><p className="ui mt-1 text-xs text-muted">{fmtDate(a.published_at)}</p></article>
             ))}
           </div>
-        ) : <Empty title="No further analysis yet" />}
+                ) : <Empty title="No further analysis yet" />}
       </section>
+
+      <ForYou />
 
       <section className="grid gap-12 lg:grid-cols-2">
         <div>
