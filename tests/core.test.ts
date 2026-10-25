@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
-describe("quote verification", () => {
-  const text = "The minister said, “We will never raise the fuel tax,” during the debate.";
-  it("accepts verbatim quotes regardless of quote style or spacing", () => {
-    expect(qxpect, it } from "vitest";
 import { assignClusters, parseFeed } from "@/lib/ai/discover";
 import { stripInvalidCitations, validateCitations } from "@/lib/ai/citations";
 import { canonicalUrl, quoteInText } from "@/lib/text";
 import { parseJsonLoose } from "@/lib/llm";
+
+describe("quote verification", () => {
+  const text = "The minister said, “We will never raise the fuel tax,” during the debate.";
+  it("accepts verbatim quotes regardless of quote style or spacing", () => {
+    expect(quoteInText("We will never   raise the fuel tax", text)).toBe(true);
+  });
+  it("rejects fabricated or paraphrased quotes", () => {
+    expect(quoteInText("We might raise the fuel tax next year", text)).toBe(false);
+  });
+});
 
 describe("clustering", () => {
   it("groups similar headlines and separates unrelated ones", () => {
@@ -29,17 +35,18 @@ describe("feeds", () => {
     expect(parseFeed(atom, "Y")[0].url).toBe("https://y.com/b");
   });
 });
-uoteInText('We will never   raise the fuel tax', text)).toBe(true);
-  });
-  it("rejects fabricated or paraphrased quotes", () => {
-    expect(quoteInText("We might raise the fuel tax next year", text)).toBe(false);
-  });
-});
 
 describe("citations", () => {
-  const base = { whatHappened: "Something happened [S1].", whyItMatters: "It matters [S2].", background: "Earlier events.", conclusion: "Open.",
-    timeline: [{ date: "2025-01-01", event: "e", sourceIds: ["S1"] }], supporting: [{ point: "p", sourceIds: ["S1"] }],
-    contradicting: [], uncertain: [] };
+  const base = {
+    whatHappened: "Something happened [S1].",
+    whyItMatters: "It matters [S2].",
+    background: "Earlier events.",
+    conclusion: "Open.",
+    timeline: [{ date: "2025-01-01", event: "e", sourceIds: ["S1"] }],
+    supporting: [{ point: "p", sourceIds: ["S1"] }],
+    contradicting: [],
+    uncertain: [],
+  };
   it("passes a valid draft", () => expect(validateCitations(base, ["S1", "S2"]).valid).toBe(true));
   it("flags unknown ids and missing citations", () => {
     const bad = { ...base, supporting: [{ point: "p", sourceIds: ["S9"] }], contradicting: [{ point: "q", sourceIds: [] }] };
