@@ -1,3 +1,6 @@
+import AuthLinks from "@/components/AuthLinks";
+// …
+<Header auth={<AuthLinks />} />
 import type { Metadata } from "next";
 import { Newsreader, Public_Sans } from "next/font/google";
 import { Footer, Header } from "@/components/Shell";

@@ -1,6 +1,7 @@
 /**
  * Save as: src/app/fact-checks/page.tsx  (replace the whole file)
  */
+import TrueFalse from "@/components/TrueFalse";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { publicDb, type Row } from "@/lib/db";

@@ -1,3 +1,6 @@
+/**
+ * Save as: src/app/page.tsx  (replace the whole file)
+ */
 import Link from "next/link";
 import { publicDb, type Row } from "@/lib/db";
 import { fmtDate } from "@/lib/verdicts";
@@ -5,12 +8,14 @@ import { Empty, SectionTitle, VerdictBadge } from "@/components/ui";
 import { Subscribe } from "@/components/Subscribe";
 import { RELATION_LABEL, type Relation } from "@/lib/ai/types";
 import { ForYou } from "@/components/ForYou";
+import { getUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const db = publicDb();
-  const [articles, checks, trending, comparisons, topics] = await Promise.all([
+  const [user, articles, checks, trending, comparisons, topics] = await Promise.all([
+    getUser(),
     db.from("articles").select("slug,title,summary,published_at,topic_slug").eq("status", "approved").order("published_at", { ascending: false }).limit(7),
     db.from("fact_checks").select("slug,claim_text,verdict,claimant,published_at").eq("status", "approved").order("published_at", { ascending: false }).limit(5),
     db.from("trending_clusters").select("*").limit(8),
@@ -57,6 +62,13 @@ export default async function Home() {
         </aside>
       </section>
 
+      {/* "For you": between the headline and Latest analysis, only for logged-in users. */}
+      {user && (
+        <section aria-label="For you">
+          <ForYou />
+        </section>
+      )}
+
       <section>
         <SectionTitle href="/search?type=articles">Latest analysis</SectionTitle>
         {latest.length ? (
@@ -65,10 +77,8 @@ export default async function Home() {
               <article key={a.slug}><h3 className="text-xl"><Link href={`/news/${a.slug}`} className="hover:underline">{a.title}</Link></h3><p className="mt-1 text-muted">{a.summary}</p><p className="ui mt-1 text-xs text-muted">{fmtDate(a.published_at)}</p></article>
             ))}
           </div>
-                ) : <Empty title="No further analysis yet" />}
+        ) : <Empty title="No further analysis yet" />}
       </section>
-
-      <ForYou />
 
       <section className="grid gap-12 lg:grid-cols-2">
         <div>

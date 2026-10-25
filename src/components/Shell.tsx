@@ -1,3 +1,7 @@
+/**
+ * Save as: src/components/Shell.tsx  (replace the whole file)
+ */
+import AuthLinks from "@/components/AuthLinks";
 import Link from "next/link";
 
 const NAV = [["News analysis", "/search?type=articles"], ["Fact-checks", "/fact-checks"], ["Statements", "/statements"], ["People", "/search?type=people"], ["Methodology", "/methodology"]];
@@ -10,11 +14,15 @@ export function Header() {
         <nav aria-label="Main" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
           {NAV.map(([label, href]) => <Link key={label} href={href} className="hover:underline">{label}</Link>)}
         </nav>
-        <form action="/search" className="ml-auto flex gap-2" role="search">
-          <label htmlFor="q" className="sr-only">Search</label>
-          <input id="q" name="q" placeholder="Search stories, people, statements" className="field w-64" />
-          <button className="btn">Search</button>
-        </form>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <form action="/search" className="flex gap-2" role="search">
+            <label htmlFor="site-search" className="sr-only">Search</label>
+            <input id="site-search" name="q" placeholder="Search stories, people, statements" className="field w-64" />
+            <button className="btn">Search</button>
+          </form>
+          {/* Outside the search form: AuthLinks has its own form for the Log out button. */}
+          <AuthLinks />
+        </div>
       </div>
     </header>
   );
