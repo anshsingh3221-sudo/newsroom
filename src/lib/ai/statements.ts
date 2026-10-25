@@ -25,8 +25,12 @@ export async function searchHistoricalStatements(q: StatementQuery, db = adminDb
   }), "search_statements") as { id: string; score: number }[];
   if (!ranked.length) return [];
   const rows = must(await db.from("statements").select("*, people(name, slug)").in("id", ranked.map((r) => r.id)), "load statements") as Row[];
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  return ranked.map((r) => ({ ...byId.get(r.id), score: r.score })).filter((r) => r.id && SOURCE_QUALITY[r.source_type] >= (q.minQuality ?? 1));
+  const byId = new Map<string, Row>(rows.map((r) => [r.id as string, r]));
+  return ranked
+    .map((r) => ({ row: byId.get(r.id), score: r.score }))
+    .filter((x): x is { row: Row; score: number } => !!x.row)
+    .map((x): Row => ({ ...x.row, score: x.score }))
+    .filter((r: Row) => (SOURCE_QUALITY[String(r.source_type)] ?? 0) >= (q.minQuality ?? 1));
 }
 
 const QuotesZ = z.object({ statements: z.array(z.object({ quote: z.string(), context: z.string().nullable(), topic: z.string().nullable() })) });
